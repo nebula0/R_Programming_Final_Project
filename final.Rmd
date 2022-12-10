@@ -119,7 +119,6 @@ ggplot(data = t_quit_ratio_melt, aes(x = year, y = value, color = variable)) +
     labs(
         x = "學年度",
         y = "百分比",
-        # title = title
         colour = "科系代碼",
         title = "國立台灣大學 101 年至 110 年休學率"
         )
@@ -129,6 +128,7 @@ So I'm going to make a function, when we call it, it can receive user input depa
 First create the `get_multiple_line` function that can make the plot, and call it in the `interactive_get_line` which can receive user input, and determine if the input is valid.
 In `interactive_get_line`, use a `while-loop` to get an input query until the user inserts `q`.
 ```{r}
+# define a function to plot multiple line
 get_multiple_line <- function(data){
     # t_quit_ratio_melt_select
     ggplot(data = data, aes(x = year, y = value, color = variable)) +
@@ -145,6 +145,7 @@ get_multiple_line <- function(data){
 ```
 
 ```{r}
+# define a function to plot multiple line according to user imput
 interactive_get_line <- function(){
     temp <- ""
     count = 1;
@@ -157,7 +158,6 @@ interactive_get_line <- function(){
         }
     
     }
-    # query_list <- c("7011", "2080")
     valid = 1
     for (i in query_list) {
         if (!(i %in% rownames(name_list))){
