@@ -1,0 +1,203 @@
+---
+title: "R Programing For Biology Final Report"
+author: "Chong Jia-Yun"
+date: "2022/12/8"
+output: html_document
+---
+<style type="text/css">
+  body{
+  font-family: pp;
+  font-size: 12pt;
+}
+</style>
+
+# Using R programming language to visualize the suspension rate of NTU students
+## Background
+When I was a freshman, I often heard a rumor from my seniors that the number of students in my department, Life Science, would be reduced by about 1/4 in second year, and then continue to decrease. However, it is difficult to judge the truth of this from the number of students in the classroom because of the differences in course selection. Is there a high percentage of suspensions in the department of Life Science?
+This project decided to use R programming language visualize the suspension rate of NTU students in the past ten years.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+# import library
+library(ggplot2)
+library(reshape2)
+```
+## Code
+### Input data
+Read in three dataframes. The original file doesn't contain the column name, so we set `header` to `FALSE`.
+Use `str` to check the data type. The count of suspension numbers should be `int`, the department name should be `char`, and the semester should be `float`. I choose semester to be `float` because it is convenient to use when plotting. The hole number is the first semester and the hole number + 0.5 is the second semester.
+The three dataframes are:  
+
+* name_list: 科系代號.csv  
+* in_school: 在學人數表.csv  
+* quit_school: 休學統計表EXCEL.csv
+
+```{r}
+name_list <-  (read.csv("./csv_file/科系代號.csv", header = F, row.names = 1))
+str(name_list)
+```
+
+```{r}
+in_school <- read.csv("./csv_file/在學人數表.csv", header = F, row.names = 1)
+str(in_school)
+head(in_school)
+```
+
+```{r}
+quit_school <- read.csv("csv_file/休學統計表EXCEL.csv", header = F, row.names = 1)
+str(quit_school)
+head(quit_school)
+```
+### Preprocessing
+
+I'm interested in the suspension "rate", to get the rate, the suspension people count `quit_school` need to be divided by the total student count `in_school`.
+`dim()` tell us the dimension of the dataframe `quit_school`, it has 64 rows and 20 columns. The first column is `year`, so it does not need to be divided. So the indexing in the loop ` quit_ratio[2:rownum,i]` starts from 2 to skip `year`.
+`t()` transpose the matrix, and let the department name be the column title, which is more convenient for plotting.
+```{r}
+quit_ratio = quit_school
+
+colnames(quit_school)
+
+colnum <- dim(quit_school)[2] # 20
+rownum <- dim(quit_school)[1] # 64
+
+# calculate ratio
+for (i in 1:colnum) {
+    quit_ratio[2:rownum,i] <- (quit_school[2:rownum,i]/in_school[2:rownum,i]) * 100
+}
+
+# transpose the matrix, let departments and year be the column names. 
+t_quit_ratio <-  as.data.frame(t(quit_ratio))
+```
+### Plot single department
+
+Define a function `get_line()`, the only input variable `query` is the department label. For example, Life Science is ` B010`. This function will not return any value but plot the line plot of that department. `paste()` receive string and variables to form a new string allowing us to create unique title for each query.
+```{r}
+# define a function to plot corresponding plot.
+get_line <- function(query){
+y = t_quit_ratio[,query]
+    title = paste("國立臺灣大學", name_list[query, 1], 
+                  "101 年至 111 年休學率", sep = "")
+    
+    ggplot(data = t_quit_ratio, aes(x = year, y = y)) + 
+        geom_line(aes(group=1)) +
+        geom_point()  +
+        theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust=1)) +
+        ylim(0, 20) + 
+        labs(
+            x = "學年度",
+            y = "百分比",
+            title = title
+        ) 
+}
+```
+Now we can simply call the function to get the relative plot. Compare the total suspension rate and that in the department of Life Science, the later seems to be higher. Here we only use descriptive statistics rather than inferential statistics since I'm not confident in my statistics knowledge background.
+```{r}
+# call the function
+query <- "sum"
+get_line(query)
+
+```
+
+```{r}
+query <- 'B010'
+get_line(query)
+```
+
+### Plot multiple department
+You may wander why can't we plot all the line in the same plot, because there will be 64 lines which is very massy, like below:
+```{r}
+t_quit_ratio_melt <- melt(t_quit_ratio, id.vars = 'year')
+ggplot(data = t_quit_ratio_melt, aes(x = year, y = value, color = variable)) +
+    ylim(0, 20) + 
+    geom_line() + 
+    labs(
+        x = "學年度",
+        y = "百分比",
+        # title = title
+        colour = "科系代碼",
+        title = "國立台灣大學 101 年至 110 年休學率"
+        )
+    
+```
+So I'm going to make a function, when we call it, it can receive user input department code and get the plot. Only showing users interesting departments will be more useful compared to plotting them all at once.
+First create the `get_multiple_line` function that can make the plot, and call it in the `interactive_get_line` which can receive user input, and determine if the input is valid.
+In `interactive_get_line`, use a `while-loop` to get an input query until the user inserts `q`.
+```{r}
+get_multiple_line <- function(data){
+    # t_quit_ratio_melt_select
+    ggplot(data = data, aes(x = year, y = value, color = variable)) +
+        ylim(0, 20) + 
+        geom_line() + 
+        labs(
+            x = "學年度",
+            y = "百分比",
+            # title = title
+            colour = "科系代碼",
+            title = "國立台灣大學 101 年至 110 年休學率"
+            ) 
+}
+```
+
+```{r}
+interactive_get_line <- function(){
+    temp <- ""
+    count = 1;
+    query_list <- c()
+    while(temp != "q" & count < 64){
+        temp = readline("輸入科系代碼，輸入 q 結束輸入:\n");
+        if (temp != "q"){
+            query_list[count] = temp
+            count <- count +1      
+        }
+    
+    }
+    # query_list <- c("7011", "2080")
+    valid = 1
+    for (i in query_list) {
+        if (!(i %in% rownames(name_list))){
+            cat(i, "is not a valid query.\n")
+            valid = 0
+        }
+    }
+    
+    if (valid){
+        t_quit_ratio_melt_select <- 
+        t_quit_ratio_melt[as.character(t_quit_ratio_melt$variable) %in% query_list,]
+        get_multiple_line(t_quit_ratio_melt_select)
+    }
+}
+
+
+```
+Pint the department code list first for user.
+```{r}
+print(name_list)
+```
+Call the function. Because when saving Rmd to html, we cannot input query, so I command out this line.
+```{r}
+# interactive_get_line()
+```
+The output plot will look like this:
+```{r}
+query_list <- c("B010", "B020")
+t_quit_ratio_melt_select <- 
+t_quit_ratio_melt[as.character(t_quit_ratio_melt$variable) %in% query_list,]
+get_multiple_line(t_quit_ratio_melt_select)
+```
+### Original data source
+
+* https://www.aca.ntu.edu.tw/w/aca/UAADStatistics_21071512245967154
+
+### Reference
+
+* https://stackoverflow.com/questions/41508459/reducing-number-of-decimal-places-in-x-axis-values-in-ggplot2-in-r
+* https://stackoverflow.com/questions/40588050/plotting-a-line-for-each-row-in-a-dataframe-with-ggplot2-in-r
+
+### Environment information
+```{r}
+sessionInfo()
+```
+

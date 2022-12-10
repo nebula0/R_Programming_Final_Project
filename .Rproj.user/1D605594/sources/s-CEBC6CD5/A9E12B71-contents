@@ -1,0 +1,22 @@
+---
+title: "Final report"
+author: "Chong Jia-Yun"
+date: "2022/12/8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+in_school <- read.csv("在學人數表.csv", header = T, row.names = 1)
+
+quit_school <- read.csv("休學統計表EXCEL.csv", header = T, row.names = 1)
+
+str(in_school)
+str(quit_school)
+```
+
+
+
