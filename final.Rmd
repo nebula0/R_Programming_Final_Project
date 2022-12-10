@@ -16,6 +16,9 @@ output: html_document
 When I was a freshman, I often heard a rumor from my seniors that the number of students in my department, Life Science, would be reduced by about 1/4 in second year, and then continue to decrease. However, it is difficult to judge the truth of this from the number of students in the classroom because of the differences in course selection. Is there a high percentage of suspensions in the department of Life Science?
 This project decided to use R programming language visualize the suspension rate of NTU students in the past ten years.
 
+## Data and Library
+The csv files and this script can be found in this [repository](https://github.com/nebula0/R_Programming_Final_Project).
+Import `ggplot2` for plotting, and `reshape2` to reshape the original dataframe to the format we want. 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
